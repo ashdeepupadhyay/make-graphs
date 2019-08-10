@@ -16,6 +16,7 @@ public class Window_Graph : MonoBehaviour
     private RectTransform dashTemplateX;
     private RectTransform dashTemplateY;
 
+    private List<GameObject> gameObjectList;
     private void Awake()
     {
         graphContainer = transform.Find("graphContainer").GetComponent<RectTransform>();
@@ -24,7 +25,7 @@ public class Window_Graph : MonoBehaviour
         dashTemplateX = graphContainer.Find("dashTemplateX").GetComponent<RectTransform>();
         dashTemplateY = graphContainer.Find("dashTemplateY").GetComponent<RectTransform>();
 
-
+        gameObjectList = new List<GameObject>();
         //CreateCircle(new Vector2(200,200));
         List<int> valueList = new List<int>() { 5, 98, 56, 45, 30, 22, 17, 15, 13, 17, 25, 37, 40, 36, 33 };
         ShowGraph(valueList,(int _i)=>"Day"+(_i+1),(float _f)=>"$"+Mathf.RoundToInt(_f));
@@ -55,8 +56,12 @@ public class Window_Graph : MonoBehaviour
         {
             getAxisLabelY = delegate (float _f) { return Mathf.RoundToInt(_f).ToString(); };
         }
+        foreach (GameObject gameObject in gameObjectList)
+        {
+            Destroy(gameObject);
+        }
+        gameObjectList.Clear();
 
-        
 
         float graphHeight = graphContainer.sizeDelta.y;
         float xSize = 50f;
@@ -85,9 +90,13 @@ public class Window_Graph : MonoBehaviour
             //float yposition = (valueList[i] / yMaximum) * graphHeight;
             float yposition = ((valueList[i]-YMinimum) / (yMaximum-YMinimum)) * graphHeight;
             GameObject circleGameObject = CreateCircle(new Vector2(xposition, yposition));
+
+            gameObjectList.Add(circleGameObject);
+
             if (lastCircleGameObject != null)
             {
-                CreateDotConnection(lastCircleGameObject.GetComponent<RectTransform>().anchoredPosition, circleGameObject.GetComponent<RectTransform>().anchoredPosition);
+                GameObject dotConnectionGameObject=CreateDotConnection(lastCircleGameObject.GetComponent<RectTransform>().anchoredPosition, circleGameObject.GetComponent<RectTransform>().anchoredPosition);
+                gameObjectList.Add(dotConnectionGameObject);
             }
             lastCircleGameObject = circleGameObject;
 
@@ -96,11 +105,13 @@ public class Window_Graph : MonoBehaviour
             labelX.gameObject.SetActive(true);
             labelX.anchoredPosition = new Vector2(xposition, -20f);
             labelX.GetComponent<Text>().text = getAxisLabelX(i);
+            gameObjectList.Add(labelX.gameObject);
 
             RectTransform dashX = Instantiate(dashTemplateX);
             dashX.SetParent(graphContainer);
             dashX.gameObject.SetActive(true);
             dashX.anchoredPosition = new Vector2(xposition, 0f);
+            gameObjectList.Add(dashX.gameObject);
         }
 
         int sepraterCount = 10;
@@ -113,15 +124,18 @@ public class Window_Graph : MonoBehaviour
             labelY.anchoredPosition = new Vector2(-80f, normalisedValue*graphHeight);
             //labelY.GetComponent<Text>().text = getAxisLabelY(normalisedValue * yMaximum);
             labelY.GetComponent<Text>().text = getAxisLabelY(YMinimum+ (normalisedValue * (yMaximum-YMinimum)));
+            gameObjectList.Add(labelY.gameObject);
 
             RectTransform dashY = Instantiate(dashTemplateY);
             dashY.SetParent(graphContainer);
             dashY.gameObject.SetActive(true);
             dashY.anchoredPosition = new Vector2(0f, normalisedValue * graphHeight);
+            gameObjectList.Add(dashY.gameObject);
+
         }
     }
 
-    public void CreateDotConnection(Vector2 dotPositionA,Vector2 dotPositionB)
+    public GameObject CreateDotConnection(Vector2 dotPositionA,Vector2 dotPositionB)
     {
         GameObject gameObject = new GameObject("dot_connection", typeof(Image));
         gameObject.transform.SetParent(graphContainer, false);
@@ -134,6 +148,8 @@ public class Window_Graph : MonoBehaviour
         rectTransform.sizeDelta = new Vector2(distance, 3f);
         rectTransform.anchoredPosition = dotPositionA+dir*distance*0.5f;
         rectTransform.localEulerAngles = new Vector3(0, 0, GetAngleFromVector(dir));
+
+        return gameObject;
     }
 
     public int GetAngleFromVector(Vector3 dir)
