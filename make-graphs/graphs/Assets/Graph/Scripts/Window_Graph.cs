@@ -12,12 +12,18 @@ public class Window_Graph : MonoBehaviour
     private RectTransform labelTemplateX;
     private RectTransform lableTemplateY;
 
+    private RectTransform dashTemplateX;
+    private RectTransform dashTemplateY;
+
+
     private void Awake()
     {
         graphContainer = transform.Find("graphContainer").GetComponent<RectTransform>();
         labelTemplateX = graphContainer.Find("labelTemplateX").GetComponent<RectTransform>();
         lableTemplateY = graphContainer.Find("labelTemplateY").GetComponent<RectTransform>();
-
+        dashTemplateX = graphContainer.Find("dashTemplateX").GetComponent<RectTransform>();
+        dashTemplateY = graphContainer.Find("dashTemplateY").GetComponent<RectTransform>();
+        
         //CreateCircle(new Vector2(200,200));
         List<int> valueList = new List<int>() { 5, 98, 56, 45, 30, 22, 17, 15, 13, 17, 25, 37, 40, 36, 33 };
         ShowGraph(valueList);
@@ -58,6 +64,11 @@ public class Window_Graph : MonoBehaviour
             labelX.gameObject.SetActive(true);
             labelX.anchoredPosition = new Vector2(xposition, -20f);
             labelX.GetComponent<Text>().text = i.ToString();
+
+            RectTransform dashX = Instantiate(dashTemplateX);
+            dashX.SetParent(graphContainer);
+            dashX.gameObject.SetActive(true);
+            dashX.anchoredPosition = new Vector2(xposition, 0f);
         }
 
         int sepraterCount = 10;
@@ -69,6 +80,11 @@ public class Window_Graph : MonoBehaviour
             float normalisedValue = i * 1f / sepraterCount;
             labelY.anchoredPosition = new Vector2(-80f, normalisedValue*graphHeight);
             labelY.GetComponent<Text>().text = Mathf.RoundToInt(normalisedValue * yMaximum).ToString();
+
+            RectTransform dashY = Instantiate(dashTemplateY);
+            dashY.SetParent(graphContainer);
+            dashY.gameObject.SetActive(true);
+            dashY.anchoredPosition = new Vector2(0f, normalisedValue * graphHeight);
         }
     }
 
