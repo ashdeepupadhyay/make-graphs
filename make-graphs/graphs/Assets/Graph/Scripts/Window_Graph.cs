@@ -16,7 +16,6 @@ public class Window_Graph : MonoBehaviour
     private RectTransform dashTemplateX;
     private RectTransform dashTemplateY;
 
-
     private void Awake()
     {
         graphContainer = transform.Find("graphContainer").GetComponent<RectTransform>();
@@ -24,10 +23,13 @@ public class Window_Graph : MonoBehaviour
         lableTemplateY = graphContainer.Find("labelTemplateY").GetComponent<RectTransform>();
         dashTemplateX = graphContainer.Find("dashTemplateX").GetComponent<RectTransform>();
         dashTemplateY = graphContainer.Find("dashTemplateY").GetComponent<RectTransform>();
-        
+
+
         //CreateCircle(new Vector2(200,200));
         List<int> valueList = new List<int>() { 5, 98, 56, 45, 30, 22, 17, 15, 13, 17, 25, 37, 40, 36, 33 };
         ShowGraph(valueList,(int _i)=>"Day"+(_i+1),(float _f)=>"$"+Mathf.RoundToInt(_f));
+
+       
     }
 
     private GameObject CreateCircle(Vector2 anchoredPosition)
@@ -53,15 +55,36 @@ public class Window_Graph : MonoBehaviour
         {
             getAxisLabelY = delegate (float _f) { return Mathf.RoundToInt(_f).ToString(); };
         }
+
+        
+
         float graphHeight = graphContainer.sizeDelta.y;
         float xSize = 50f;
-        float yMaximum = 100f;
+        float yMaximum = valueList[0];
+        float YMinimum = valueList[0];
+        foreach(int value in valueList)
+        {
+            if (value > yMaximum)
+            {
+                yMaximum = value;
+            }
+
+            if (value < YMinimum)
+            {
+                YMinimum = value;
+            }
+        }
+        //yMaximum = yMaximum * 1.2f;
+        yMaximum = yMaximum + ((yMaximum - YMinimum) * 0.2f);
+        YMinimum = YMinimum - ((yMaximum - YMinimum) * 0.2f);
+
         GameObject lastCircleGameObject = null;
         for (int i= 0; i < valueList.Count;++i)
         {
             float xposition = xSize+i * xSize;
-            float yposition = (valueList[i] / yMaximum) * graphHeight;
-            GameObject circleGameObject= CreateCircle(new Vector2(xposition, yposition));
+            //float yposition = (valueList[i] / yMaximum) * graphHeight;
+            float yposition = ((valueList[i]-YMinimum) / (yMaximum-YMinimum)) * graphHeight;
+            GameObject circleGameObject = CreateCircle(new Vector2(xposition, yposition));
             if (lastCircleGameObject != null)
             {
                 CreateDotConnection(lastCircleGameObject.GetComponent<RectTransform>().anchoredPosition, circleGameObject.GetComponent<RectTransform>().anchoredPosition);
@@ -88,7 +111,8 @@ public class Window_Graph : MonoBehaviour
             labelY.gameObject.SetActive(true);
             float normalisedValue = i * 1f / sepraterCount;
             labelY.anchoredPosition = new Vector2(-80f, normalisedValue*graphHeight);
-            labelY.GetComponent<Text>().text = getAxisLabelY(normalisedValue * yMaximum);
+            //labelY.GetComponent<Text>().text = getAxisLabelY(normalisedValue * yMaximum);
+            labelY.GetComponent<Text>().text = getAxisLabelY(YMinimum+ (normalisedValue * (yMaximum-YMinimum)));
 
             RectTransform dashY = Instantiate(dashTemplateY);
             dashY.SetParent(graphContainer);
