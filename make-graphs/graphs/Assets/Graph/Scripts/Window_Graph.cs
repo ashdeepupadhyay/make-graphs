@@ -9,9 +9,15 @@ public class Window_Graph : MonoBehaviour
     [SerializeField]
     private Sprite circleSprite;
 
+    private RectTransform labelTemplateX;
+    private RectTransform lableTemplateY;
+
     private void Awake()
     {
         graphContainer = transform.Find("graphContainer").GetComponent<RectTransform>();
+        labelTemplateX = graphContainer.Find("labelTemplateX").GetComponent<RectTransform>();
+        lableTemplateY = graphContainer.Find("labelTemplateY").GetComponent<RectTransform>();
+
         //CreateCircle(new Vector2(200,200));
         List<int> valueList = new List<int>() { 5, 98, 56, 45, 30, 22, 17, 15, 13, 17, 25, 37, 40, 36, 33 };
         ShowGraph(valueList);
@@ -46,6 +52,23 @@ public class Window_Graph : MonoBehaviour
                 CreateDotConnection(lastCircleGameObject.GetComponent<RectTransform>().anchoredPosition, circleGameObject.GetComponent<RectTransform>().anchoredPosition);
             }
             lastCircleGameObject = circleGameObject;
+
+            RectTransform labelX = Instantiate(labelTemplateX);
+            labelX.SetParent(graphContainer);
+            labelX.gameObject.SetActive(true);
+            labelX.anchoredPosition = new Vector2(xposition, -20f);
+            labelX.GetComponent<Text>().text = i.ToString();
+        }
+
+        int sepraterCount = 10;
+        for(int i = 0; i <= sepraterCount; i++)
+        {
+            RectTransform labelY = Instantiate(lableTemplateY);
+            labelY.SetParent(graphContainer);
+            labelY.gameObject.SetActive(true);
+            float normalisedValue = i * 1f / sepraterCount;
+            labelY.anchoredPosition = new Vector2(-80f, normalisedValue*graphHeight);
+            labelY.GetComponent<Text>().text = Mathf.RoundToInt(normalisedValue * yMaximum).ToString();
         }
     }
 
@@ -70,18 +93,6 @@ public class Window_Graph : MonoBehaviour
         float n = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
         if (n < 0) n += 360;
         int angle = Mathf.RoundToInt(n);
-
         return angle;
-    }
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }
