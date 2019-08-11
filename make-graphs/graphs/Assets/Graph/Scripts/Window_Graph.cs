@@ -27,10 +27,10 @@ public class Window_Graph : MonoBehaviour
 
         gameObjectList = new List<GameObject>();
         //CreateCircle(new Vector2(200,200));
-        //List<int> valueList = new List<int>() { 5, 98, 56, 45, 30, 22, 17, 15, 13, 17, 25, 37, 40, 36, 33 };
-        List<int> valueList = new List<int>() { 5};
+        List<int> valueList = new List<int>() { 5, 98, 56, 45, 30, 22, 17, 15, 13, 17, 25, 37, 40, 36, 33,60,54,22,67,98,34,25,2,7,87 };
+        //List<int> valueList = new List<int>() { 5};
 
-        ShowGraph(valueList,(int _i)=>"Day"+(_i+1),(float _f)=>"$"+Mathf.RoundToInt(_f));
+        ShowGraph(valueList,-1,(int _i)=>"Day"+(_i+1),(float _f)=>"$"+Mathf.RoundToInt(_f));
        // valueList[0] = 20;
        // ShowGraph(valueList, (int _i) => "Day" + (_i + 1), (float _f) => "$" + Mathf.RoundToInt(_f));
 
@@ -49,7 +49,7 @@ public class Window_Graph : MonoBehaviour
         return gameObject;
     }
 
-    private void ShowGraph(List<int> valueList,Func<int,string>getAxisLabelX=null, Func<float, string> getAxisLabelY=null)
+    private void ShowGraph(List<int> valueList, int maxVisibleValueAmount=-1,Func<int,string>getAxisLabelX=null, Func<float, string> getAxisLabelY=null)
     {
         if (getAxisLabelX == null)
         {
@@ -59,6 +59,10 @@ public class Window_Graph : MonoBehaviour
         {
             getAxisLabelY = delegate (float _f) { return Mathf.RoundToInt(_f).ToString(); };
         }
+        if (maxVisibleValueAmount <= 0)
+        {
+            maxVisibleValueAmount = valueList.Count;
+        }
         foreach (GameObject gameObject in gameObjectList)
         {
             Destroy(gameObject);
@@ -67,8 +71,9 @@ public class Window_Graph : MonoBehaviour
 
 
         float graphHeight = graphContainer.sizeDelta.y;
-        float xSize = 50f;
-        int maxVisibleValueAmount = 5;
+        float graphWidth = graphContainer.sizeDelta.x;
+
+        float xSize = graphWidth/(maxVisibleValueAmount+1);//+1 to give buffer on right side
 
         float yMaximum = valueList[0];
         float YMinimum = valueList[0];
