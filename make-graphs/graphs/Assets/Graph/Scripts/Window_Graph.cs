@@ -29,27 +29,17 @@ public class Window_Graph : MonoBehaviour
         //CreateCircle(new Vector2(200,200));
         List<int> valueList = new List<int>() { 5, 98, 56, 45, 30, 22, 17, 15, 13, 17, 25, 37, 40, 36, 33,60,54,22,67,98,34,25,2,7,87 };
         //List<int> valueList = new List<int>() { 5};
-
-        ShowGraph(valueList,-1,(int _i)=>"Day"+(_i+1),(float _f)=>"$"+Mathf.RoundToInt(_f));
+        //IGraphVisual graphVisual= new LineGraphVisual(graphContainer, dot, Color.green, Color.white);
+        IGraphVisual graphVisual=new BarChartVisual(graphContainer, Color.green, 0.8f);
+        ShowGraph(valueList, graphVisual, -1,(int _i)=>"Day"+(_i+1),(float _f)=>"$"+Mathf.RoundToInt(_f));
        // valueList[0] = 20;
        // ShowGraph(valueList, (int _i) => "Day" + (_i + 1), (float _f) => "$" + Mathf.RoundToInt(_f));
 
     }
 
-    private GameObject CreateDot(Vector2 anchoredPosition)
-    {
-        GameObject gameObject = new GameObject("dot", typeof(Image));
-        gameObject.transform.SetParent(graphContainer, false);
-        gameObject.GetComponent<Image>().sprite = dot;
-        RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
-        rectTransform.anchoredPosition = anchoredPosition;
-        rectTransform.sizeDelta = new Vector2(11, 11);
-        rectTransform.anchorMin = new Vector2(0, 0);
-        rectTransform.anchorMax = new Vector2(0, 0);
-        return gameObject;
-    }
+    
 
-    private void ShowGraph(List<int> valueList, int maxVisibleValueAmount=-1,Func<int,string>getAxisLabelX=null, Func<float, string> getAxisLabelY=null)
+    private void ShowGraph(List<int> valueList,IGraphVisual graphVisual, int maxVisibleValueAmount=-1,Func<int,string>getAxisLabelX=null, Func<float, string> getAxisLabelY=null)
     {
         if (getAxisLabelX == null)
         {
@@ -102,26 +92,23 @@ public class Window_Graph : MonoBehaviour
         //GameObject lastDotGameObject = null;
         int xIndex = 0;
 
-        BarChartVisual barChartVisual = new BarChartVisual(graphContainer,Color.green,0.8f);
+        //BarChartVisual barChartVisual = new BarChartVisual(graphContainer,Color.green,0.8f);
+        //LineGraphVisual lineGraphVisual = new LineGraphVisual(graphContainer, dot,Color.green,Color.white);
         for (int i=Mathf.Max(valueList.Count-maxVisibleValueAmount,0); i < valueList.Count;++i)
         {
             float xposition = xSize+xIndex * xSize;
             //float yposition = (valueList[i] / yMaximum) * graphHeight;
             float yposition = ((valueList[i]-YMinimum) / (yMaximum-YMinimum)) * graphHeight;
             //GameObject barGameObject= CreateBar(new Vector2(xposition, yposition), xSize*0.9f);
-            GameObject barGameObject = barChartVisual.AddGraphVisual(new Vector2(xposition, yposition), xSize);
-            gameObjectList.Add(barGameObject);
+            //GameObject barGameObject = barChartVisual.AddGraphVisual(new Vector2(xposition, yposition), xSize);
+            //gameObjectList.AddRange(barChartVisual.AddGraphVisual(new Vector2(xposition, yposition), xSize));
+            //gameObjectList.AddRange(lineGraphVisual.AddGraphVisual(new Vector2(xposition, yposition), xSize));
+            gameObjectList.AddRange(graphVisual.AddGraphVisual(new Vector2(xposition, yposition), xSize));
+
+            
+            //gameObjectList.Add(barGameObject);
             /*
-            GameObject dotGameObject = CreateDot(new Vector2(xposition, yposition));
-
-            gameObjectList.Add(dotGameObject);
-
-            if (lastDotGameObject != null)
-            {
-                GameObject dotConnectionGameObject=CreateDotConnection(lastDotGameObject.GetComponent<RectTransform>().anchoredPosition, dotGameObject.GetComponent<RectTransform>().anchoredPosition);
-                gameObjectList.Add(dotConnectionGameObject);
-            }
-            lastDotGameObject = dotGameObject;
+            
             */
             RectTransform labelX = Instantiate(labelTemplateX);
             labelX.SetParent(graphContainer);
@@ -159,33 +146,14 @@ public class Window_Graph : MonoBehaviour
         }
     }
 
-    public GameObject CreateDotConnection(Vector2 dotPositionA,Vector2 dotPositionB)
+    private interface IGraphVisual
     {
-        GameObject gameObject = new GameObject("dot_connection", typeof(Image));
-        gameObject.transform.SetParent(graphContainer, false);
-        gameObject.GetComponent<Image>().color = new Color(1, 1, 1, 0.5f);
-        RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
-        Vector2 dir = (dotPositionB - dotPositionA).normalized;
-        float distance = Vector2.Distance(dotPositionA, dotPositionB);
-        rectTransform.anchorMin = new Vector2(0, 0);
-        rectTransform.anchorMax = new Vector2(0, 0);
-        rectTransform.sizeDelta = new Vector2(distance, 3f);
-        rectTransform.anchoredPosition = dotPositionA+dir*distance*0.5f;
-        rectTransform.localEulerAngles = new Vector3(0, 0, GetAngleFromVector(dir));
-
-        return gameObject;
-    }
-    
-    public int GetAngleFromVector(Vector3 dir)
-    {
-        dir = dir.normalized;
-        float n = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-        if (n < 0) n += 360;
-        int angle = Mathf.RoundToInt(n);
-        return angle;
+        List<GameObject> AddGraphVisual(Vector2 graphPosition, float graphPositionWidth);
     }
 
-    private class BarChartVisual
+
+
+    private class BarChartVisual: IGraphVisual
     {
         private RectTransform graphContainer;
         private Color barColor;
@@ -197,10 +165,10 @@ public class Window_Graph : MonoBehaviour
             this.barWidthMultiplier = barWidthMultiplier;
         }
 
-        public GameObject AddGraphVisual(Vector2 graphPosition,float graphPositionWidth)
+        public List<GameObject> AddGraphVisual(Vector2 graphPosition,float graphPositionWidth)
         {
             GameObject barGameObject = CreateBar(graphPosition, graphPositionWidth);
-            return barGameObject;
+            return new List<GameObject>() { barGameObject };
         }
         private GameObject CreateBar(Vector2 graphPostion, float barWidth)
         {
@@ -214,6 +182,76 @@ public class Window_Graph : MonoBehaviour
             rectTransform.anchorMax = new Vector2(0, 0);
             rectTransform.pivot = new Vector2(.5f, 0f);
             return gameObject;
+        }
+    }
+
+    private class LineGraphVisual: IGraphVisual
+    {
+        private RectTransform graphContainer;
+        private Sprite dotSprite;
+        private GameObject lastDotGameObject;
+        private Color dotColor;
+        private Color dotConnectionColor;
+        public LineGraphVisual(RectTransform graphContainer,Sprite dotSprite,Color dotColor,Color dotConnectionColor)
+        {
+            this.graphContainer = graphContainer;
+            this.dotSprite = dotSprite;
+            this.lastDotGameObject = null;
+            this.dotColor = dotColor;
+            this.dotConnectionColor = dotConnectionColor;
+        }
+        public List<GameObject> AddGraphVisual(Vector2 graphPosition, float graphPositionWidth)
+        {
+            List<GameObject> gameObjectList = new List<GameObject>();
+            GameObject dotGameObject = CreateDot(graphPosition);
+
+            gameObjectList.Add(dotGameObject);
+
+            if (lastDotGameObject != null)
+            {
+                GameObject dotConnectionGameObject = CreateDotConnection(lastDotGameObject.GetComponent<RectTransform>().anchoredPosition, dotGameObject.GetComponent<RectTransform>().anchoredPosition);
+                gameObjectList.Add(dotConnectionGameObject);
+            }
+            lastDotGameObject = dotGameObject;
+            return gameObjectList;
+        }
+        private GameObject CreateDot(Vector2 anchoredPosition)
+        {
+            GameObject gameObject = new GameObject("dot", typeof(Image));
+            gameObject.transform.SetParent(graphContainer, false);
+            gameObject.GetComponent<Image>().sprite = dotSprite;
+            gameObject.GetComponent<Image>().color = dotColor;
+            RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
+            rectTransform.anchoredPosition = anchoredPosition;
+            rectTransform.sizeDelta = new Vector2(11, 11);
+            rectTransform.anchorMin = new Vector2(0, 0);
+            rectTransform.anchorMax = new Vector2(0, 0);
+            return gameObject;
+        }
+
+        public GameObject CreateDotConnection(Vector2 dotPositionA, Vector2 dotPositionB)
+        {
+            GameObject gameObject = new GameObject("dot_connection", typeof(Image));
+            gameObject.transform.SetParent(graphContainer, false);
+            gameObject.GetComponent<Image>().color = dotConnectionColor;
+            RectTransform rectTransform = gameObject.GetComponent<RectTransform>();
+            Vector2 dir = (dotPositionB - dotPositionA).normalized;
+            float distance = Vector2.Distance(dotPositionA, dotPositionB);
+            rectTransform.anchorMin = new Vector2(0, 0);
+            rectTransform.anchorMax = new Vector2(0, 0);
+            rectTransform.sizeDelta = new Vector2(distance, 3f);
+            rectTransform.anchoredPosition = dotPositionA + dir * distance * 0.5f;
+            rectTransform.localEulerAngles = new Vector3(0, 0, GetAngleFromVector(dir));
+
+            return gameObject;
+        }
+        public int GetAngleFromVector(Vector3 dir)
+        {
+            dir = dir.normalized;
+            float n = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+            if (n < 0) n += 360;
+            int angle = Mathf.RoundToInt(n);
+            return angle;
         }
     }
 }
