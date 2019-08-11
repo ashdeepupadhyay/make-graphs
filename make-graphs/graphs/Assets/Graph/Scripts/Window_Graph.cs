@@ -27,10 +27,13 @@ public class Window_Graph : MonoBehaviour
 
         gameObjectList = new List<GameObject>();
         //CreateCircle(new Vector2(200,200));
-        List<int> valueList = new List<int>() { 5, 98, 56, 45, 30, 22, 17, 15, 13, 17, 25, 37, 40, 36, 33 };
-        ShowGraph(valueList,(int _i)=>"Day"+(_i+1),(float _f)=>"$"+Mathf.RoundToInt(_f));
+        //List<int> valueList = new List<int>() { 5, 98, 56, 45, 30, 22, 17, 15, 13, 17, 25, 37, 40, 36, 33 };
+        List<int> valueList = new List<int>() { 5};
 
-       
+        ShowGraph(valueList,(int _i)=>"Day"+(_i+1),(float _f)=>"$"+Mathf.RoundToInt(_f));
+       // valueList[0] = 20;
+       // ShowGraph(valueList, (int _i) => "Day" + (_i + 1), (float _f) => "$" + Mathf.RoundToInt(_f));
+
     }
 
     private GameObject CreateCircle(Vector2 anchoredPosition)
@@ -65,10 +68,13 @@ public class Window_Graph : MonoBehaviour
 
         float graphHeight = graphContainer.sizeDelta.y;
         float xSize = 50f;
+        int maxVisibleValueAmount = 5;
+
         float yMaximum = valueList[0];
         float YMinimum = valueList[0];
-        foreach(int value in valueList)
+        for(int i=Mathf.Max( valueList.Count - maxVisibleValueAmount,0);i<valueList.Count;i++)
         {
+            int value = valueList[i];
             if (value > yMaximum)
             {
                 yMaximum = value;
@@ -79,14 +85,20 @@ public class Window_Graph : MonoBehaviour
                 YMinimum = value;
             }
         }
+        float yDifference = yMaximum - YMinimum;
+        if (yDifference <= 0)
+        {
+            yDifference = 5f;
+        }
         //yMaximum = yMaximum * 1.2f;
-        yMaximum = yMaximum + ((yMaximum - YMinimum) * 0.2f);
-        YMinimum = YMinimum - ((yMaximum - YMinimum) * 0.2f);
+        yMaximum = yMaximum + ((yDifference) * 0.2f);
+        YMinimum = YMinimum - ((yDifference) * 0.2f);
 
         GameObject lastCircleGameObject = null;
-        for (int i= 0; i < valueList.Count;++i)
+        int xIndex = 0;
+        for (int i=Mathf.Max(valueList.Count-maxVisibleValueAmount,0); i < valueList.Count;++i)
         {
-            float xposition = xSize+i * xSize;
+            float xposition = xSize+xIndex * xSize;
             //float yposition = (valueList[i] / yMaximum) * graphHeight;
             float yposition = ((valueList[i]-YMinimum) / (yMaximum-YMinimum)) * graphHeight;
             GameObject circleGameObject = CreateCircle(new Vector2(xposition, yposition));
@@ -112,6 +124,7 @@ public class Window_Graph : MonoBehaviour
             dashX.gameObject.SetActive(true);
             dashX.anchoredPosition = new Vector2(xposition, 0f);
             gameObjectList.Add(dashX.gameObject);
+            xIndex++;
         }
 
         int sepraterCount = 10;
