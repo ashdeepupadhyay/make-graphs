@@ -20,6 +20,7 @@ public class Window_Graph : MonoBehaviour
     private GameObject tooltipGameObject;
 
     private List<GameObject> gameObjectList;
+    private List<IGraphVisualObject> graphVisualObjectList;
 
     private List<int> valueList;
     private IGraphVisual graphVisual;
@@ -38,6 +39,7 @@ public class Window_Graph : MonoBehaviour
         tooltipGameObject = graphContainer.Find("ToolTip").gameObject;
 
         gameObjectList = new List<GameObject>();
+        graphVisualObjectList = new List<IGraphVisualObject>();
         //CreateCircle(new Vector2(200,200));
         List<int> valueList = new List<int>() { 5, 98, 56, 45, 30, 22, 17, 15, 13, 17, 25, 37, 40, 36, 33,60,54,22,67,98,34,25,2,7,87 };
         //List<int> valueList = new List<int>() { 5};
@@ -134,6 +136,11 @@ public class Window_Graph : MonoBehaviour
         }
         gameObjectList.Clear();
 
+        foreach(IGraphVisualObject graphVisualObject in graphVisualObjectList)
+        {
+            graphVisualObject.CleanUp();
+        }
+        graphVisualObjectList.Clear();
 
         float graphHeight = graphContainer.sizeDelta.y;
         float graphWidth = graphContainer.sizeDelta.x;
@@ -179,9 +186,10 @@ public class Window_Graph : MonoBehaviour
             //gameObjectList.AddRange(barChartVisual.AddGraphVisual(new Vector2(xposition, yposition), xSize));
             //gameObjectList.AddRange(lineGraphVisual.AddGraphVisual(new Vector2(xposition, yposition), xSize));
             string toolTipText = getAxisLabelY(valueList[i]);
-            gameObjectList.AddRange(graphVisual.AddGraphVisual(new Vector2(xposition, yposition), xSize, toolTipText));
+            //gameObjectList.AddRange(graphVisual.CreateGraphVisualObject(new Vector2(xposition, yposition), xSize, toolTipText));
+            graphVisualObjectList.Add(graphVisual.CreateGraphVisualObject(new Vector2(xposition, yposition), xSize, toolTipText));
 
-            
+
             //gameObjectList.Add(barGameObject);
             /*
             
@@ -224,10 +232,16 @@ public class Window_Graph : MonoBehaviour
 
     private interface IGraphVisual
     {
-        List<GameObject> AddGraphVisual(Vector2 graphPosition, float graphPositionWidth,string toolTipText);
+        IGraphVisualObject CreateGraphVisualObject(Vector2 graphPosition, float graphPositionWidth,string toolTipText);
     }
 
-
+    private interface IGraphVisualObject
+    {
+        void SetGraphVisualObjectInfo(Vector2 graphPosition, float graphPositionWidth, string toolTipText);
+        void CleanUp();
+    }
+    
+    
 
     private class BarChartVisual: IGraphVisual
     {
@@ -241,19 +255,15 @@ public class Window_Graph : MonoBehaviour
             this.barWidthMultiplier = barWidthMultiplier;
         }
 
-        public List<GameObject> AddGraphVisual(Vector2 graphPosition,float graphPositionWidth,string toolTipText)
+        public IGraphVisualObject CreateGraphVisualObject(Vector2 graphPosition,float graphPositionWidth,string toolTipText)
         {
             GameObject barGameObject = CreateBar(graphPosition, graphPositionWidth);
-            MouseHover barMouseHover = barGameObject.AddComponent<MouseHover>();
-            barMouseHover.MouseOverOnceFunc += () =>
-            {
-                ShowTooltip_Static(toolTipText, graphPosition);
-            };
-            barMouseHover.MouseOutOnceFunc += () =>
-            {
-                HideTooltip_Static();
-            };
-            return new List<GameObject>() { barGameObject };
+
+            BarChartVisualObject barChartVisualObject = new BarChartVisualObject(barGameObject, barWidthMultiplier);
+            barChartVisualObject.SetGraphVisualObjectInfo(graphPosition, graphPositionWidth, toolTipText);
+
+            return barChartVisualObject;
+            //return new List<GameObject>() { barGameObject };
         }
         private GameObject CreateBar(Vector2 graphPostion, float barWidth)
         {
@@ -266,7 +276,40 @@ public class Window_Graph : MonoBehaviour
             rectTransform.anchorMin = new Vector2(0, 0);
             rectTransform.anchorMax = new Vector2(0, 0);
             rectTransform.pivot = new Vector2(.5f, 0f);
+            MouseHover barMouseHover = gameObject.AddComponent<MouseHover>();
+
             return gameObject;
+        }
+        public class BarChartVisualObject : IGraphVisualObject
+        {
+            private GameObject barGameObject;
+            private float barWidthMultiplier;
+            public BarChartVisualObject(GameObject barGameObject,float barWidthMultiplier)
+            {
+                this.barGameObject = barGameObject;
+                this.barWidthMultiplier = barWidthMultiplier;
+
+            }
+            public void CleanUp()
+            {
+                Destroy(barGameObject);
+            }
+            public void SetGraphVisualObjectInfo(Vector2 graphPosition, float graphPositionWidth, string toolTipText)
+            {
+                RectTransform rectTransform = barGameObject.GetComponent<RectTransform>();
+                rectTransform.anchoredPosition = new Vector2(graphPosition.x, 0f);
+                rectTransform.sizeDelta = new Vector2(graphPositionWidth * barWidthMultiplier, graphPosition.y);
+                MouseHover barMouseHover = barGameObject.GetComponent<MouseHover>();
+
+                barMouseHover.MouseOverOnceFunc = () =>
+                {
+                    ShowTooltip_Static(toolTipText, graphPosition);
+                };
+                barMouseHover.MouseOutOnceFunc = () =>
+                {
+                    HideTooltip_Static();
+                };
+            }
         }
     }
 
@@ -285,7 +328,7 @@ public class Window_Graph : MonoBehaviour
             this.dotColor = dotColor;
             this.dotConnectionColor = dotConnectionColor;
         }
-        public List<GameObject> AddGraphVisual(Vector2 graphPosition, float graphPositionWidth, string toolTipText)
+        public IGraphVisualObject CreateGraphVisualObject(Vector2 graphPosition, float graphPositionWidth, string toolTipText)
         {
             List<GameObject> gameObjectList = new List<GameObject>();
             GameObject dotGameObject = CreateDot(graphPosition);
@@ -306,7 +349,8 @@ public class Window_Graph : MonoBehaviour
                 gameObjectList.Add(dotConnectionGameObject);
             }
             lastDotGameObject = dotGameObject;
-            return gameObjectList;
+            return null;
+            //return gameObjectList;
         }
         private GameObject CreateDot(Vector2 anchoredPosition)
         {
