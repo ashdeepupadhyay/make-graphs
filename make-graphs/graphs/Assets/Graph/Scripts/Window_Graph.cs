@@ -17,6 +17,13 @@ public class Window_Graph : MonoBehaviour
     private RectTransform dashTemplateY;
 
     private List<GameObject> gameObjectList;
+
+    private List<int> valueList;
+    private IGraphVisual graphVisual;
+    private int maxVisibleValueAmount;
+    private Func<int, string> getAxisLabelX = null;
+    private Func<float, string> getAxisLabelY = null;
+
     private void Awake()
     {
         graphContainer = transform.Find("graphContainer").GetComponent<RectTransform>();
@@ -24,23 +31,54 @@ public class Window_Graph : MonoBehaviour
         lableTemplateY = graphContainer.Find("labelTemplateY").GetComponent<RectTransform>();
         dashTemplateX = graphContainer.Find("dashTemplateX").GetComponent<RectTransform>();
         dashTemplateY = graphContainer.Find("dashTemplateY").GetComponent<RectTransform>();
-
         gameObjectList = new List<GameObject>();
         //CreateCircle(new Vector2(200,200));
         List<int> valueList = new List<int>() { 5, 98, 56, 45, 30, 22, 17, 15, 13, 17, 25, 37, 40, 36, 33,60,54,22,67,98,34,25,2,7,87 };
         //List<int> valueList = new List<int>() { 5};
-        //IGraphVisual graphVisual= new LineGraphVisual(graphContainer, dot, Color.green, Color.white);
-        IGraphVisual graphVisual=new BarChartVisual(graphContainer, Color.green, 0.8f);
-        ShowGraph(valueList, graphVisual, -1,(int _i)=>"Day"+(_i+1),(float _f)=>"$"+Mathf.RoundToInt(_f));
-       // valueList[0] = 20;
-       // ShowGraph(valueList, (int _i) => "Day" + (_i + 1), (float _f) => "$" + Mathf.RoundToInt(_f));
+        IGraphVisual lineGraphVisual= new LineGraphVisual(graphContainer, dot, Color.green, Color.white);
+        IGraphVisual barGraphVisual=new BarChartVisual(graphContainer, Color.green, 0.8f);
+        ShowGraph(valueList, barGraphVisual, -1,(int _i)=>"Day"+(_i+1),(float _f)=>"$"+Mathf.RoundToInt(_f));
+        transform.Find("barGraphButton").GetComponent<Button>().onClick.AddListener(()=>SetGraphVisual(barGraphVisual));
+        transform.Find("LineGraphButton").GetComponent<Button>().onClick.AddListener(() => SetGraphVisual(lineGraphVisual));
+        transform.Find("increaseVisibleButton").GetComponent<Button>().onClick.AddListener(() => IncreaseGraphVisual());
+        transform.Find("decreaseVisibleButton").GetComponent<Button>().onClick.AddListener(() => DecreaseGraphVisual());
+        transform.Find("DollarYlabelButton").GetComponent<Button>().onClick.AddListener(() => SetGetAxisLabelY((float _f) => "$" + Mathf.RoundToInt(_f)));
+        transform.Find("EuroYlabelButton").GetComponent<Button>().onClick.AddListener(() => SetGetAxisLabelY((float _f) => "€" + Mathf.RoundToInt(_f/1.18f)));
+
+        // valueList[0] = 20;
+        // ShowGraph(valueList, (int _i) => "Day" + (_i + 1), (float _f) => "$" + Mathf.RoundToInt(_f));
 
     }
 
-    
+    private void SetGetAxisLabelX(Func<int,string> getAxisLabelX)
+    {
+        ShowGraph(this.valueList, this.graphVisual, this.maxVisibleValueAmount, getAxisLabelX, this.getAxisLabelY);
+    }
+    private void SetGetAxisLabelY(Func<float, string> getAxisLabelY)
+    {
+        ShowGraph(this.valueList, this.graphVisual, this.maxVisibleValueAmount, this.getAxisLabelX, getAxisLabelY);
+    }
+    private void SetGraphVisual(IGraphVisual graphVisual)
+    {
+        ShowGraph(this.valueList, graphVisual,this.maxVisibleValueAmount,this.getAxisLabelX,this.getAxisLabelY);
+    }
+
+    private void IncreaseGraphVisual()
+    {
+        ShowGraph(this.valueList, graphVisual, this.maxVisibleValueAmount+1, this.getAxisLabelX, this.getAxisLabelY);
+    }
+
+    private void DecreaseGraphVisual()
+    {
+        ShowGraph(this.valueList, graphVisual, this.maxVisibleValueAmount - 1, this.getAxisLabelX, this.getAxisLabelY);
+    }
 
     private void ShowGraph(List<int> valueList,IGraphVisual graphVisual, int maxVisibleValueAmount=-1,Func<int,string>getAxisLabelX=null, Func<float, string> getAxisLabelY=null)
     {
+        this.valueList = valueList;
+        this.graphVisual = graphVisual;
+        this.getAxisLabelX = getAxisLabelX;
+        this.getAxisLabelY = getAxisLabelY;
         if (getAxisLabelX == null)
         {
             getAxisLabelX = delegate (int _i) { return _i.ToString(); };
@@ -53,6 +91,8 @@ public class Window_Graph : MonoBehaviour
         {
             maxVisibleValueAmount = valueList.Count;
         }
+        this.maxVisibleValueAmount = maxVisibleValueAmount;
+
         foreach (GameObject gameObject in gameObjectList)
         {
             Destroy(gameObject);
