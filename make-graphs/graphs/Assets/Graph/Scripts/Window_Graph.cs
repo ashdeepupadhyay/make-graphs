@@ -19,10 +19,16 @@ public class Values
 
 public class Window_Graph : MonoBehaviour
 {
+    private const float API_CHECK_MAXTIME = 1 * 60.0f; //1 minutes
+    private float apiCheckCountdown = API_CHECK_MAXTIME;
+ 
     private static Window_Graph instance;
 
     [SerializeField]
     private Sprite dot;
+
+    [SerializeField]
+    private string URL;
 
     private RectTransform graphContainer;
 
@@ -81,9 +87,19 @@ public class Window_Graph : MonoBehaviour
     {
         StartCoroutine(GetJson());
     }
+    void Update()
+    {
+        apiCheckCountdown -= Time.deltaTime;
+        if (apiCheckCountdown <= 0)
+        {
+            StartCoroutine(GetJson());
+            apiCheckCountdown = API_CHECK_MAXTIME;
+        }
+    }
+
     IEnumerator GetJson()
     {
-        UnityWebRequest www = UnityWebRequest.Get("https://api.myjson.com/bins/bbrtf");
+        UnityWebRequest www = UnityWebRequest.Get(URL);
         yield return www.SendWebRequest();
 
         if (www.isNetworkError || www.isHttpError)
