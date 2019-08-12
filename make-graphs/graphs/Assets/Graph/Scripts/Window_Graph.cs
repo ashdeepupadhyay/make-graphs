@@ -2,7 +2,20 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
+
+[Serializable]
+public class ListItem
+{
+    public Values[] Values;
+}
+[Serializable]
+public class Values
+{
+    public string Day;
+    public int value;
+}
 
 public class Window_Graph : MonoBehaviour
 {
@@ -44,13 +57,12 @@ public class Window_Graph : MonoBehaviour
         dashTemplateX = graphContainer.Find("dashTemplateX").GetComponent<RectTransform>();
         dashTemplateY = graphContainer.Find("dashTemplateY").GetComponent<RectTransform>();
         tooltipGameObject = graphContainer.Find("ToolTip").gameObject;
-        //dashContainer = graphContainer.Find("dashContainer").GetComponent<RectTransform>();
 
         gameObjectList = new List<GameObject>();
         yLabelList = new List<RectTransform>();
         graphVisualObjectList = new List<IGraphVisualObject>();
 
-        List<int> valueList = new List<int>() { 5, 98, 56, 45, 30, 22, 17, 15, 13, 17, 25, 37, 40, 36, 33,60,54,22,67,98,34,25,2,7,87 };
+        //List<int> valueList = new List<int>() { 5, 98, 56, 45, 30, 22, 17, 15, 13, 17, 25, 37, 40, 36, 33,60,54,22,67,98,34,25,2,7,87 };
 
         IGraphVisual lineGraphVisual= new LineGraphVisual(graphContainer, dot, Color.green, Color.white);
         IGraphVisual barGraphVisual=new BarChartVisual(graphContainer, Color.green, 0.8f);
@@ -63,9 +75,43 @@ public class Window_Graph : MonoBehaviour
         transform.Find("EuroYlabelButton").GetComponent<Button>().onClick.AddListener(() => SetGetAxisLabelY((float _f) => "€" + Mathf.RoundToInt(_f/1.18f)));
 
         HideToolTip();
+        //ShowGraph(valueList, barGraphVisual, -1, (int _i) => "Day" + (_i + 1), (float _f) => "$" + Mathf.RoundToInt(_f));           
+    }
+    private void Start()
+    {
+        StartCoroutine(GetJson());
+    }
+    IEnumerator GetJson()
+    {
+        UnityWebRequest www = UnityWebRequest.Get("https://api.myjson.com/bins/bbrtf");
+        yield return www.SendWebRequest();
+
+        if (www.isNetworkError || www.isHttpError)
+        {
+            Debug.Log(www.error);
+        }
+        else
+        {
+            // Show results as text
+            Debug.Log(www.downloadHandler.text);
+            ProcessJson(www.downloadHandler.text);
+            // Or retrieve results as binary data
+            //byte[] results = www.downloadHandler.data;
+        }
+    }
+    private void ProcessJson(string json)
+    {
+        List<int> valueList = new List<int>();
+        ListItem items = JsonUtility.FromJson<ListItem>(json);
+        Debug.Log(items.Values.Length);
+        for (int i = 0; i < items.Values.Length; i++)
+        {
+            Debug.Log("***"+items.Values[i].Day+"****"+ items.Values[i].value);
+            valueList.Add(items.Values[i].value);
+        }
+        IGraphVisual barGraphVisual = new BarChartVisual(graphContainer, Color.green, 0.8f);
         ShowGraph(valueList, barGraphVisual, -1, (int _i) => "Day" + (_i + 1), (float _f) => "$" + Mathf.RoundToInt(_f));           
     }
- 
     private void ShowTooltip(string toolTipText, Vector2 anchoredPosition)
     {
         tooltipGameObject.SetActive(true);
