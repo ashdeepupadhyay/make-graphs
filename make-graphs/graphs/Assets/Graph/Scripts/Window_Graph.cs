@@ -19,6 +19,8 @@ public class Values
 
 public class Window_Graph : MonoBehaviour
 {
+    //https://api.myjson.com/bins/rcbzn
+    //https://api.myjson.com/bins/bbrtf
     private const float API_CHECK_MAXTIME = 1 * 60.0f; //1 minutes
     private float apiCheckCountdown = API_CHECK_MAXTIME;
  
